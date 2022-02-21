@@ -10,15 +10,16 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
 
-class _DiamondDataset1(Dataset, ABC):
+class _DiamondDataset2(Dataset, ABC):
 
     def __init__(self):
-        self._data_path = Path('Data') / 'Diamonds' / 'Diamonds'
+        self._data_path = Path('Data') / 'Diamonds2'
 
         self.csv_data = pd.concat(
             [pd.read_csv(self._data_path / 'data_cushion.csv'), pd.read_csv(self._data_path / 'data_emerald.csv'),
-             pd.read_csv(self._data_path / 'data_heart.csv'), pd.read_csv(self._data_path / 'data_oval.csv'),
-             pd.read_csv(self._data_path / 'data_radiant.csv'), pd.read_csv(self._data_path / 'data_round.csv')],
+             pd.read_csv(self._data_path / 'data_heart.csv'), pd.read_csv(self._data_path / 'data_marquise.csv'),
+             pd.read_csv(self._data_path / 'data_oval.csv'), pd.read_csv(self._data_path / 'data_pear.csv'),
+             pd.read_csv(self._data_path / 'data_princess.csv'), pd.read_csv(self._data_path / 'data_round.csv')],
             ignore_index=True)
 
         self._clean_and_shuffle()
@@ -65,8 +66,10 @@ class _DiamondDataset1(Dataset, ABC):
             'cushion': os.listdir(image_path / 'cushion'),
             'emerald': os.listdir(image_path / 'emerald'),
             'heart': os.listdir(image_path / 'heart'),
+            'marquise': os.listdir(image_path / 'marquise'),
             'oval': os.listdir(image_path / 'oval'),
-            'radiant': os.listdir(image_path / 'radiant'),
+            'pear': os.listdir(image_path / 'pear'),
+            'radiant': os.listdir(image_path / 'princess'),
             'round': os.listdir(image_path / 'round')
         }
 
@@ -82,17 +85,15 @@ class _DiamondDataset1(Dataset, ABC):
         self.csv_data = self.csv_data.reindex(range(self.csv_data.shape[0]))
 
 
-class DiamondDataset1Train(_DiamondDataset1):
+class DiamondDataset2Train(_DiamondDataset2):
 
     def _clean_and_shuffle(self):
         self.csv_data = self.csv_data[self.csv_data['Use'] == 'Train']  # Remove test data
-        self.csv_data.drop(columns='Data Url', inplace=True)  # Drop the url column
         self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data
 
 
-class DiamondDataset1Test(_DiamondDataset1):
+class DiamondDataset2Test(_DiamondDataset2):
 
     def _clean_and_shuffle(self):
-        self.csv_data = self.csv_data[self.csv_data['Use'] == 'Test']  # Remove train data
-        self.csv_data.drop(columns='Data Url', inplace=True)  # Drop the url column
+        self.csv_data = self.csv_data[self.csv_data['Use'] == 'Train']  # Remove train data
         self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data
