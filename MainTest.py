@@ -1,6 +1,8 @@
-from DiamondDataset import DiamondDataset1
+from DiamondDataset1 import DiamondDataset1Train, DiamondDataset1Test
 
 
 if __name__ == '__main__':
-    data = DiamondDataset1()
-    print(data)
+    train_data = DiamondDataset1Train()
+    test_data = DiamondDataset1Test()
+    print(train_data)
+    print(test_data)

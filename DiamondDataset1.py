@@ -3,13 +3,14 @@ from pathlib import Path
 from typing import Tuple, List
 from PIL import Image
 import pandas as pd
+from abc import ABC, abstractmethod
 
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
 
-class DiamondDataset1(Dataset):
+class _DiamondDataset1(Dataset, ABC):
 
     def __init__(self):
         self._data_path = Path('Data') / 'Diamonds' / 'Diamonds'
@@ -20,9 +21,7 @@ class DiamondDataset1(Dataset):
              pd.read_csv(self._data_path / 'data_radiant.csv'), pd.read_csv(self._data_path / 'data_round.csv')],
             ignore_index=True)
 
-        self.csv_data.drop(columns='Data Url', inplace=True)  # Drop the url column
-        self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data
-
+        self._clean_and_shuffle()
         self._remove_no_image_entries()
 
     def __str__(self):
@@ -37,6 +36,12 @@ class DiamondDataset1(Dataset):
         :param item: uint representing index
         :return: 2-tuple with the first entry being the labels associated with the image and the second being the image
         """
+        if item >= self.csv_data.shape[0]:
+            raise IndexError(f'Index {item} is too large. Max index is {self.csv_data.shape[0] - 1}.')
+
+        if item < 0:
+            raise IndexError(f'Index {item} is too small. Min index is 0.')
+
         labels = self.csv_data.iloc[[item]].values.tolist()[0]
         image_path = self._data_path / 'images' / labels[1].lower()
 
@@ -48,6 +53,10 @@ class DiamondDataset1(Dataset):
         to_tensor = transforms.ToTensor()
         image = to_tensor(image)
         return image, labels
+
+    @abstractmethod
+    def _clean_and_shuffle(self):
+        pass
 
     def _remove_no_image_entries(self):
         image_path = self._data_path / 'images'
@@ -71,3 +80,19 @@ class DiamondDataset1(Dataset):
 
         self.csv_data.drop(index=to_drop, inplace=True)
         self.csv_data = self.csv_data.reindex(range(self.csv_data.shape[0]))
+
+
+class DiamondDataset1Train(_DiamondDataset1):
+
+    def _clean_and_shuffle(self):
+        self.csv_data = self.csv_data[self.csv_data['Use'] == 'Train']  # Remove test data
+        self.csv_data.drop(columns='Data Url', inplace=True)  # Drop the url column
+        self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data
+
+
+class DiamondDataset1Test(_DiamondDataset1):
+
+    def _clean_and_shuffle(self):
+        self.csv_data = self.csv_data[self.csv_data['Use'] == 'Test']  # Remove test data
+        self.csv_data.drop(columns='Data Url', inplace=True)  # Drop the url column
+        self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data
