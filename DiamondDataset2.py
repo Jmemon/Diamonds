@@ -69,7 +69,7 @@ class _DiamondDataset2(Dataset, ABC):
             'marquise': os.listdir(image_path / 'marquise'),
             'oval': os.listdir(image_path / 'oval'),
             'pear': os.listdir(image_path / 'pear'),
-            'radiant': os.listdir(image_path / 'princess'),
+            'princess': os.listdir(image_path / 'princess'),
             'round': os.listdir(image_path / 'round')
         }
 
