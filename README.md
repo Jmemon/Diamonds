@@ -4,5 +4,5 @@ Run the following commands:
     source venv/bin/activate
     pip install -r requirements.txt
 
-## Dataset
-We are using 
+## Datasets
+- https://www.kaggle.com/harshitlakhani/natural-diamonds-prices-images
