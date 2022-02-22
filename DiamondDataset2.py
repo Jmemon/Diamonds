@@ -73,15 +73,30 @@ class _DiamondDataset2(Dataset, ABC):
             'round': os.listdir(image_path / 'round')
         }
 
+        to_tensor = transforms.ToTensor()
+        prod_video = Image.open(Path('Data') / 'Diamonds2' / 'images' / 'cushion' / '1781169.png').convert('RGB')
+        prod_video = to_tensor(prod_video)
+
         to_drop = list()
         for idx, row in self.csv_data.iterrows():
             image_list = image_fnames[row['Shape'].lower()]
-            img_id = str(row['Id'])
+            image_id = str(row['Id'])
 
-            if img_id + '.jpg' not in image_list and img_id + '.png' not in image_list:
+            if image_id + '.jpg' not in image_list and image_id + '.png' not in image_list:
                 to_drop.append(idx)
+                continue
 
             if row.isna().any():
+                to_drop.append(idx)
+                continue
+
+            try:
+                image = Image.open(image_path / row['Shape'].lower() / (image_id + '.jpg')).convert('RGB')
+            except FileNotFoundError:
+                image = Image.open(image_path / row['Shape'].lower() / (image_id + '.png')).convert('RGB')
+
+            image = to_tensor(image)
+            if (image == prod_video).all():
                 to_drop.append(idx)
 
         self.csv_data.drop(index=to_drop, inplace=True)
