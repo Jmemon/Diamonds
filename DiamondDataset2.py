@@ -96,6 +96,9 @@ class _DiamondDataset2(Dataset, ABC):
                 image = Image.open(image_path / row['Shape'].lower() / (image_id + '.png')).convert('RGB')
 
             image = to_tensor(image)
+            if image.shape != prod_video.shape:
+                continue
+
             if (image == prod_video).all():
                 to_drop.append(idx)
 
