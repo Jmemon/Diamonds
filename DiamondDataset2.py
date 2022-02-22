@@ -43,8 +43,8 @@ class _DiamondDataset2(Dataset, ABC):
         if item < 0:
             raise IndexError(f'Index {item} is too small. Min index is 0.')
 
-        labels = self.csv_data.iloc[[item]].values.tolist()[0]
-        image_path = self._data_path / 'images' / labels[1].lower()
+        labels = self.csv_data.iloc[item].tolist()
+        image_path = self._data_path / 'images' / str(labels[1]).lower()
 
         try:
             image = Image.open(image_path / (str(labels[0]) + '.jpg')).convert('RGB')
@@ -81,8 +81,11 @@ class _DiamondDataset2(Dataset, ABC):
             if img_id + '.jpg' not in image_list and img_id + '.png' not in image_list:
                 to_drop.append(idx)
 
+            if row.isna().any():
+                to_drop.append(idx)
+
         self.csv_data.drop(index=to_drop, inplace=True)
-        self.csv_data = self.csv_data.reindex(range(self.csv_data.shape[0]))
+        self.csv_data.set_index(pd.Index(range(self.csv_data.shape[0])), inplace=True)
 
 
 class DiamondDataset2Train(_DiamondDataset2):
@@ -95,5 +98,5 @@ class DiamondDataset2Train(_DiamondDataset2):
 class DiamondDataset2Test(_DiamondDataset2):
 
     def _clean_and_shuffle(self):
-        self.csv_data = self.csv_data[self.csv_data['Use'] == 'Train']  # Remove train data
+        self.csv_data = self.csv_data[self.csv_data['Use'] == 'Test']  # Remove train data
         self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data
