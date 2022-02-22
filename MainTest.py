@@ -19,6 +19,7 @@ if __name__ == '__main__':
     - After filtering out everything we don't want, there isn't a ton of data
     - Every image is taken from an almost identical angle and distance, so this model will require images like the ones
     in this dataset to make accurate predictions
+        - Will not be robust
         - For an average user, this is a completely unrealistic assumption
         - Might even warrant searching for another dataset to supplement
     """
