@@ -1,4 +1,4 @@
-## Setup Instructions
+## Setup
 Run the following commands from the root directory of this project:
 
     python -m venv .venv
