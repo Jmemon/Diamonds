@@ -1,5 +1,5 @@
 ## Setup Instructions
-Run the following commands:
+Run the following commands from the root directory of this project:
 
     python -m venv .venv
     source .venv/bin/activate
