@@ -22,4 +22,8 @@ if __name__ == '__main__':
         - Will not be robust
         - For an average user, this is a completely unrealistic assumption
         - Might even warrant searching for another dataset to supplement
+        - Other options:
+            - Add borders to images with random stuff in it
+            - Rotate images, then crop/resize/border to make it's size compatible with other samples
+            - Change some pixels to random values
     """
