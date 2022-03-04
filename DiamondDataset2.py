@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
 import pandas as pd
-from abc import ABC, abstractmethod
+from abc import ABC
+
+import torch
 
 from DiamondDataset import _DiamondDataset
 
@@ -30,23 +32,19 @@ class _DiamondDataset2(_DiamondDataset, ABC):
             'round': os.listdir(self._image_path / 'round')
         }
 
-        self._clean_and_shuffle()
-        self._remove_no_image_entries()
-
-    @abstractmethod
-    def _clean_and_shuffle(self):
-        pass
+        self._partition_and_shuffle()
+        self._remove_invalid_image_entries()
 
 
 class DiamondDataset2Train(_DiamondDataset2):
 
-    def _clean_and_shuffle(self):
+    def _partition_and_shuffle(self):
         self.csv_data = self.csv_data[self.csv_data['Use'] == 'Train']  # Remove test data
         self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data
 
 
 class DiamondDataset2Test(_DiamondDataset2):
 
-    def _clean_and_shuffle(self):
+    def _partition_and_shuffle(self):
         self.csv_data = self.csv_data[self.csv_data['Use'] == 'Test']  # Remove train data
         self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data

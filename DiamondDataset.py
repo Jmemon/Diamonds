@@ -1,8 +1,9 @@
 from typing import List, Tuple
-from abc import ABC
+from abc import ABC, abstractmethod
 import pandas as pd
 from PIL import Image
 from pathlib import Path
+import random
 
 import torch
 from torch.utils.data import Dataset
@@ -39,9 +40,51 @@ class _DiamondDataset(Dataset, ABC):
 
         to_tensor = transforms.ToTensor()
         image = to_tensor(image)
+        image = self._preprocess_image(image)
         return image, labels
 
-    def _remove_no_image_entries(self):
+    def _preprocess_image(self, image: torch.Tensor) -> torch.Tensor:
+        image = self._random_squares(image)
+        image = self._add_border(image)
+        return image
+
+    def _add_border(self, image: torch.Tensor) -> torch.Tensor:
+        """
+        Adds an extra 50 pixels above, below, left, and right of image.
+        :return: torch.Tensor modified to include more images
+        """
+        assert image.shape == (3, 300, 300), f'_add_border() expected a 3x300x300 image tensor, got {image.shape}'
+
+        # TODO: Randomly bias the random value generation toward certain channels for increased variability of examples?
+        #channel = random.choice([0, 1, 2])  # r, g, b
+
+        new_image = torch.rand((image.shape[0], image.shape[1] + 100, image.shape[2] + 100))
+        new_image[:, 50: 350, 50: 350] = image
+
+        return new_image
+
+    def _random_squares(self, image: torch.Tensor) -> torch.Tensor:
+        """
+        Adds up to 10 random 10x10 squares in random locations of the main image
+        :param image: torch.Tensor to modify
+        :return: torch.Tensor that is modified version of original
+        """
+        assert image.shape == (3, 300, 300), f'Expected an unaltered image, got an image of shape {image.shape}'
+
+        num_squares = random.randint(1, 10)  # integer in [1, 5]
+
+        for _ in range(num_squares):
+            start_row = random.randint(0, 290)
+            start_col = random.randint(0, 290)
+            image[:, start_row: start_row + 10, start_col: start_col + 10] = torch.rand((3, 10, 10))
+
+        return image
+
+    @abstractmethod
+    def _partition_and_shuffle(self):
+        pass
+
+    def _remove_invalid_image_entries(self):
         to_tensor = transforms.ToTensor()
         prod_video = Image.open(Path('Data') / 'Diamonds2' / 'images' / 'cushion' / '1781169.png').convert('RGB')
         prod_video = to_tensor(prod_video)
@@ -66,6 +109,7 @@ class _DiamondDataset(Dataset, ABC):
 
             image = to_tensor(image)
             if image.shape != prod_video.shape:
+                to_drop.append(idx)
                 continue
 
             if (image == prod_video).all():
