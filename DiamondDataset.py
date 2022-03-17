@@ -4,6 +4,7 @@ import pandas as pd
 from PIL import Image
 from pathlib import Path
 import random
+import re
 
 import torch
 from torch.utils.data import Dataset
@@ -11,6 +12,15 @@ import torchvision.transforms as transforms
 
 
 class _DiamondDataset(Dataset, ABC):
+
+    labels = [
+        ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'SI3', 'I1', 'I2', 'I3'],  # clarity
+        ['FANCY'] + [chr(n) for n in range(68, 91)],  # colour
+        ['EX', 'VG', 'GD', 'F', 'PR'],  # cut
+        ['EX', 'VG', 'GD', 'F', 'PR'],  # polish
+        ['EX', 'VG', 'GD', 'FR', 'PR'],  # symmetry
+        ['N', 'F', 'M', ('SL', 'ST'), ('VS', 'VSL')]  # fluorescence
+    ]
 
     def __str__(self):
         return str(self.csv_data)
@@ -31,7 +41,11 @@ class _DiamondDataset(Dataset, ABC):
             raise IndexError(f'Index {item} is too small. Min index is 0.')
 
         labels = self.csv_data.iloc[item].tolist()
-        image_path = self._data_path / 'images' / str(labels[1]).lower()
+        labels = self._preprocess_labels(labels)
+        print(labels)
+
+        shape_type = self.get_shape(labels[1])
+        image_path = self._data_path / 'images' / shape_type
 
         try:
             image = Image.open(image_path / (str(labels[0]) + '.jpg')).convert('RGB')
@@ -42,6 +56,53 @@ class _DiamondDataset(Dataset, ABC):
         image = to_tensor(image)
         image = self._preprocess_image(image)
         return image, labels
+
+    @abstractmethod
+    def get_shape(self, shape_tens: torch.Tensor) -> str:
+        pass
+
+    def _preprocess_labels(self, labels: list[str]) -> list[torch.Tensor]:
+        """
+        Convert everything to one-hot vectors
+        - figure out all the possible values for each label
+        - vectors should be torch tensors
+        Categorical Labels:
+        - Shape[1], Clarity[3], Colour[4], Cut[5], Polish[6], Symmetry[7], Fluorescence[8]
+        - Shape has different potential values in Diamonds vs Diamonds 2
+          - For Diamonds: CUSHION, EMERALD, HEART, OVAL, ROUND, RADIANT
+          - For Diamonds2: CUSHION, EMERALD, HEART, OVAL, ROUND, MARQUISE, PEAR, PRINCESS
+        - Clarity: FL, IF, VVS1, VVS2, VS1, VS2, SI1, SI2, SI3, I1, I2, I3
+          - http://www.prinsandprins.com/wp-content/uploads/2012/08/Diamond_Clarity_Chart.jpg
+        - Colour: FANCY, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+            - Use regex. Patterns include 'FANCY', '[D-Z]', '[D-Z]-[D-Z]'
+        - Cut: EX, VG, GD, F, PR (PR doesn't appear anywhere in the dataset)
+        - Polish: EX, VG, GD, F, PR (PR doesn't appear in the dataset)
+        - Symmetry: EX, VG, GD, FR, PR (PR doesn't appear in the dataset)
+        - Fluorescence: N, F, M, SL, ST, VS, VSL
+            - None, Faint, Medium, Strong (ST and SL), Very Strong (VS and VSL)
+
+        Output vector will be a list of Tensors in the following order (and with the following sizes):
+        - Shape (), Clarity (12), Colour (24), Cut (5), Polish (5), Symmetry (5), Fluorescence (5)
+        """
+        out = [labels[0], None, labels[2], torch.zeros(12),
+               torch.zeros(24), torch.zeros(5), torch.zeros(5), torch.zeros(5),
+               torch.zeros(5)] + labels[9:]
+        label_idxs = [3, 4, 5, 6, 7, 8]
+
+        for idx, tens in enumerate(out[3: 9]):
+            if idx == 5:
+                label_idx = -1
+
+                for jdx, label in enumerate(self.labels[idx]):
+                    if labels[8] in label:
+                        label_idx = jdx
+
+                tens[label_idx] = 1
+                continue
+
+            tens[self.labels[idx].index(labels[label_idxs[idx]])] = 1
+
+        return out
 
     def _preprocess_image(self, image: torch.Tensor) -> torch.Tensor:
         image = self._random_squares(image)

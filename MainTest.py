@@ -5,18 +5,20 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     train_data1 = DiamondDataset1Train()
-    test_data1 = DiamondDataset1Test()
+    #test_data1 = DiamondDataset1Test()
 
-    train_data2 = DiamondDataset2Train()
-    test_data2 = DiamondDataset2Test()
+    #train_data2 = DiamondDataset2Train()
+    #test_data2 = DiamondDataset2Test()
 
-    plt.figure()
+    #plt.figure()
 
-    for i in range(9):
-        plt.subplot(3, 3, i + 1)
-        plt.imshow(train_data2[i][0].permute(1, 2, 0).numpy())
+    #for i in range(9):
+    #    plt.subplot(3, 3, i + 1)
+    #    plt.imshow(train_data2[i][0].permute(1, 2, 0).numpy())
 
-    plt.show()
+    #plt.show()
+
+    train_data1[3]
 
     """
     Dataset problems:

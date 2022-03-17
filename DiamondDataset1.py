@@ -11,7 +11,11 @@ from DiamondDataset import _DiamondDataset
 
 class _DiamondDataset1(_DiamondDataset, ABC):
 
+    shape_labels = ['CUSHION', 'EMERALD', 'HEART', 'OVAL', 'ROUND', 'RADIANT']
+
     def __init__(self):
+        super().__init__()
+
         self._data_path = Path('Data') / 'Diamonds' / 'Diamonds'
         self._image_path = self._data_path / 'images'
 
@@ -32,6 +36,24 @@ class _DiamondDataset1(_DiamondDataset, ABC):
 
         self._partition_and_shuffle()
         self._remove_invalid_image_entries()
+
+    def get_shape(self, shape_tens: torch.Tensor) -> str:
+        shape_idx = -1
+        for idx, val in enumerate(shape_tens):
+            if val == 1.:
+                shape_idx = idx
+
+        return self.shape_labels[shape_idx]
+
+    def _preprocess_labels(self, labels: list[str]) -> list[torch.Tensor]:
+        out = super()._preprocess_labels(labels)
+
+        assert out[1] is None
+
+        out[1] = torch.zeros(len(self.shape_labels))
+        out[1][self.shape_labels.index(labels[1])] = 1
+
+        return out
 
     def _preprocess_image(self, image: torch.Tensor) -> torch.Tensor:
         image = self._random_squares(image)
