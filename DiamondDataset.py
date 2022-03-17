@@ -132,7 +132,7 @@ class _DiamondDataset(Dataset, ABC):
         """
         assert image.shape == (3, 300, 300), f'Expected an unaltered image, got an image of shape {image.shape}'
 
-        num_squares = random.randint(1, 10)  # integer in [1, 5]
+        num_squares = random.randint(0, 10)  # integer in [0, 10]
 
         for _ in range(num_squares):
             start_row = random.randint(0, 290)
