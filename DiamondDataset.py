@@ -42,7 +42,6 @@ class _DiamondDataset(Dataset, ABC):
 
         labels = self.csv_data.iloc[item].tolist()
         labels = self._preprocess_labels(labels)
-        print(labels)
 
         shape_type = self.get_shape(labels[1])
         image_path = self._data_path / 'images' / shape_type
@@ -90,7 +89,16 @@ class _DiamondDataset(Dataset, ABC):
         label_idxs = [3, 4, 5, 6, 7, 8]
 
         for idx, tens in enumerate(out[3: 9]):
-            if idx == 5:
+            if idx == 1:  # Colour
+                label = labels[4]
+                if label in self.labels[idx]:
+                    tens[self.labels[idx].index(labels[label_idxs[idx]])] = 1
+                else:  # For cases like 'U-V'
+                    high, low = re.search(r'(\b[D-Z]\b)-(\b[D-Z]\b)', label).groups()
+                    for ascii in range(ord(high), ord(low) + 1):
+                        tens[self.labels[idx].index(chr(ascii))] = 1
+
+            elif idx == 5:  # Fluorescence
                 label_idx = -1
 
                 for jdx, label in enumerate(self.labels[idx]):
@@ -98,9 +106,11 @@ class _DiamondDataset(Dataset, ABC):
                         label_idx = jdx
 
                 tens[label_idx] = 1
-                continue
 
-            tens[self.labels[idx].index(labels[label_idxs[idx]])] = 1
+            else:  # Everything Else
+                tens[self.labels[idx].index(labels[label_idxs[idx]])] = 1
+
+            assert torch.all(torch.logical_or(tens == 0., tens == 1.))
 
         return out
 

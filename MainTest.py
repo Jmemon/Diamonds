@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     train_data1 = DiamondDataset1Train()
-    #test_data1 = DiamondDataset1Test()
+    test_data1 = DiamondDataset1Test()
 
-    #train_data2 = DiamondDataset2Train()
-    #test_data2 = DiamondDataset2Test()
+    train_data2 = DiamondDataset2Train()
+    test_data2 = DiamondDataset2Test()
 
     #plt.figure()
 
@@ -18,16 +18,9 @@ if __name__ == '__main__':
 
     #plt.show()
 
-    train_data1[3]
-
-    # TODO: I have preprocessing almost done. All images get random squares and a border. Almost all labels get
-    #  converted to one-hot
-    #  I do think some labels, when they are unexpected values, will give an error, which will need to be handled
-    #  I also didn't do regex and stuff for color
-
     # TODO: Next steps
     #  After that try to build a model and throw some stuff in there
-    #  Do price prediction first. Try two things: the image and weight, then just the labels. See how it does
+    #  Do price prediction first. Try two things: the image and weight, then just the labels. See how it does.
     #  Second give the weight and the image, then try to get the right labels
 
     """
