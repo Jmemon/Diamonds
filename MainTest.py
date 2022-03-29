@@ -1,14 +1,22 @@
-from DiamondDataset1 import DiamondDataset1Train, DiamondDataset1Test
-from DiamondDataset2 import DiamondDataset2Train, DiamondDataset2Test
+from DiamondDataset2 import DiamondDataset2
+
+from torch.utils.data import random_split
+from torch.utils.data import DataLoader
 
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    train_data1 = DiamondDataset1Train()
-    test_data1 = DiamondDataset1Test()
+    diamonds = DiamondDataset2()
 
-    train_data2 = DiamondDataset2Train()
-    test_data2 = DiamondDataset2Test()
+    train_len = int(0.7 * len(diamonds))
+    train, test = random_split(diamonds, (train_len, len(diamonds) - train_len))
+
+    train_dl = DataLoader(train, batch_size=32, shuffle=True)
+    test_dl = DataLoader(test, batch_size=128, shuffle=False)
+
+    print(train[0][0].shape)
+    print(train[0][0])
+    [print(tens) for tens in train[0][1]]
 
     #plt.figure()
 

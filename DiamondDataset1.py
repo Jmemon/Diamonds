@@ -9,7 +9,7 @@ import torch
 from DiamondDataset import _DiamondDataset
 
 
-class _DiamondDataset1(_DiamondDataset, ABC):
+class DiamondDataset1(_DiamondDataset, ABC):
 
     shape_labels = ['CUSHION', 'EMERALD', 'HEART', 'OVAL', 'ROUND', 'RADIANT']
 
@@ -60,18 +60,6 @@ class _DiamondDataset1(_DiamondDataset, ABC):
         image = self._add_border(image)
         return image
 
-
-class DiamondDataset1Train(_DiamondDataset1):
-
     def _partition_and_shuffle(self):
-        self.csv_data = self.csv_data[self.csv_data['Use'] == 'Train']  # Remove test data
         self.csv_data.drop(columns='Data Url', inplace=True)  # Drop the url column
-        self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data
-
-
-class DiamondDataset1Test(_DiamondDataset1):
-
-    def _partition_and_shuffle(self):
-        self.csv_data = self.csv_data[self.csv_data['Use'] == 'Test']  # Remove train data
-        self.csv_data.drop(columns='Data Url', inplace=True)  # Drop the url column
-        self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the data
+        self.csv_data = self.csv_data.sample(frac=1, ignore_index=True)  # Shuffle the dataa
