@@ -50,7 +50,7 @@ class DiamondDataset1(_DiamondDataset, ABC):
 
         assert out[1] is None
 
-        out[1] = torch.zeros(len(self.shape_labels))
+        out[1] = torch.zeros(len(self.shape_labels), dtype=torch.double)
         out[1][self.shape_labels.index(labels[1])] = 1
 
         return out

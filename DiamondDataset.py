@@ -1,10 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from abc import ABC, abstractmethod
 import pandas as pd
 from PIL import Image
 from pathlib import Path
 import random
 import re
+import numpy as np
 
 import torch
 from torch.utils.data import Dataset
@@ -28,7 +29,7 @@ class _DiamondDataset(Dataset, ABC):
     def __len__(self) -> int:
         return self.csv_data.shape[0]
 
-    def __getitem__(self, item: int) -> Tuple[torch.Tensor, List[str]]:
+    def __getitem__(self, item: int) -> Tuple[Tuple[torch.Tensor, float], List[torch.Tensor]]:
         """
         Returns an item by index from the dataset.
         :param item: uint representing index
@@ -54,17 +55,19 @@ class _DiamondDataset(Dataset, ABC):
         to_tensor = transforms.ToTensor()
         image = to_tensor(image)
         image = self._preprocess_image(image)
-        return image, labels
+        return (image.double(), labels[2]), [labels[1]] + labels[3:]
 
     @abstractmethod
     def get_shape(self, shape_tens: torch.Tensor) -> str:
         pass
 
-    def _preprocess_labels(self, labels: list[str]) -> list[torch.Tensor]:
+    def _preprocess_labels(self, labels: list[str]) -> list[Union[torch.Tensor, float]]:
         """
         Convert everything to one-hot vectors
         - figure out all the possible values for each label
         - vectors should be torch tensors
+        Numerical Labels:
+        - Messurements[9], Price[10]
         Categorical Labels:
         - Shape[1], Clarity[3], Colour[4], Cut[5], Polish[6], Symmetry[7], Fluorescence[8]
         - Shape has different potential values in Diamonds vs Diamonds 2
@@ -83,9 +86,12 @@ class _DiamondDataset(Dataset, ABC):
         Output vector will be a list of Tensors in the following order (and with the following sizes):
         - Shape (), Clarity (12), Colour (24), Cut (5), Polish (5), Symmetry (5), Fluorescence (5)
         """
-        out = [labels[0], None, labels[2], torch.zeros(12),
-               torch.zeros(24), torch.zeros(5), torch.zeros(5), torch.zeros(5),
-               torch.zeros(5)] + labels[9:]
+        out = [labels[0], None, torch.tensor([float(labels[2])], dtype=torch.double),
+               torch.zeros(12, dtype=torch.double), torch.zeros(24, dtype=torch.double),
+               torch.zeros(5, dtype=torch.double), torch.zeros(5, dtype=torch.double),
+               torch.zeros(5, dtype=torch.double), torch.zeros(5, dtype=torch.double),
+               torch.Tensor([float(itm) for itm in re.split(r'[-×]', labels[9])]),
+               float(''.join([c for c in labels[10] if c != ',']))]
         label_idxs = [3, 4, 5, 6, 7, 8]
 
         for idx, tens in enumerate(out[3: 9]):
@@ -111,6 +117,10 @@ class _DiamondDataset(Dataset, ABC):
                 tens[self.labels[idx].index(labels[label_idxs[idx]])] = 1
 
             assert torch.all(torch.logical_or(tens == 0., tens == 1.))
+
+        for t in out:
+            if type(t) is torch.Tensor:
+                t = t.double()
 
         return out
 
@@ -142,7 +152,7 @@ class _DiamondDataset(Dataset, ABC):
         """
         assert image.shape == (3, 300, 300), f'Expected an unaltered image, got an image of shape {image.shape}'
 
-        num_squares = random.randint(0, 10)  # integer in [0, 10]
+        num_squares = min(int(np.random.poisson(lam=3, size=None)), 10)  # right-skewed distribution
 
         for _ in range(num_squares):
             start_row = random.randint(0, 290)
